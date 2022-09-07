@@ -1,33 +1,33 @@
-package com.example.dependency.services.impl;
+package com.example.demo2.services;
+
+import com.amazonaws.services.s3.AmazonS3;
+import com.amazonaws.services.s3.model.ListObjectsV2Result;
+import com.amazonaws.services.s3.model.S3ObjectSummary;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import com.amazonaws.services.s3.model.PutObjectRequest;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import com.example.dependency.services.AwsS3Service;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-
-import com.amazonaws.services.s3.AmazonS3;
-import com.amazonaws.services.s3.model.ListObjectsV2Result;
-import com.amazonaws.services.s3.model.PutObjectRequest;
-import com.amazonaws.services.s3.model.S3ObjectSummary;
 
 @Service
-public class AwsS3ServiceImpl implements AwsS3Service {
+public class AwsS3ServiceImpl implements AwsS3Service{
     private static final Logger LOGGER = LoggerFactory.getLogger(AwsS3ServiceImpl.class);
-    @Autowired
-    private AmazonS3 amazonS3;
+    private final AmazonS3 amazonS3;
 
     @Value("${aws.s3.bucket}")
     private String bucketName;
+
+    public AwsS3ServiceImpl(AmazonS3 amazonS3) {
+        this.amazonS3 = amazonS3;
+    }
 
     @Override
     public void uploadFile(MultipartFile file) {
@@ -35,7 +35,6 @@ public class AwsS3ServiceImpl implements AwsS3Service {
         try (FileOutputStream stream = new FileOutputStream(mainFile)) {
             stream.write(file.getBytes());
             String newFileName = System.currentTimeMillis() + "_" + mainFile.getName();
-            LOGGER.info("Subiendo archivo con el nombre... " + newFileName);
             PutObjectRequest request = new PutObjectRequest(bucketName, newFileName, mainFile);
             amazonS3.putObject(request);
         } catch (IOException e) {
