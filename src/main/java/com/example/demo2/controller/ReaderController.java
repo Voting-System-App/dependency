@@ -55,7 +55,8 @@ public class ReaderController {
             int response = FingerprintSensorEx.AcquireFingerprint(devHandle, imgbuf, template, size);
             Thread.sleep(2000L);
             if (response == 0) {
-                Path path = Paths.get("src/main/resources/images/" + fileName + ".bmp");
+                Path pathBmp = Paths.get("src/main/resources/images/" + fileName + ".bmp");
+                Path pathJpg = Paths.get("src/main/resources/images/" + fileName + ".jpg");
                 if(flag==false){
                     fingerReader.writeBitmap(imgbuf, fpWidth, fpHeight, "src/main/resources/images/"+fileName+".bmp");
                     File input = new File("src/main/resources/images/"+fileName+".bmp");
@@ -66,7 +67,8 @@ public class ReaderController {
                     MultipartFile multipartFile = new MultipartImage(baos.toByteArray(),fileName+".jpg",fileName+".jpg", MediaType.MULTIPART_FORM_DATA.toString(), baos.size());
                     aws.uploadFile(multipartFile,fileName);
                     var = true;
-                    Files.delete(path);
+                    Files.delete(pathJpg);
+                    Files.delete(pathBmp);
                     break;
                 }
                 else {
@@ -76,6 +78,8 @@ public class ReaderController {
                     File output = new File("src/main/resources/images/"+fileName+".jpg");
                     ImageIO.write(image, "jpg", output);
                     var = aws.validate(fileName);
+                    Files.delete(pathJpg);
+                    Files.delete(pathBmp);
                     break;
                 }
             }
