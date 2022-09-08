@@ -13,13 +13,12 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/test")
-public class TestController {
+@RequestMapping("/reader")
+public class ReaderController {
 
     private boolean mbStop = true;
     private byte[] template = new byte[2048];
@@ -30,14 +29,14 @@ public class TestController {
 
     private final FingerReader fingerReader;
     private final AwsS3Service aws;
-    public TestController(FingerReader fingerReader, AwsS3Service aws) {
+    public ReaderController(FingerReader fingerReader, AwsS3Service aws) {
         this.fingerReader = fingerReader;
         this.aws = aws;
     }
 
-    @GetMapping()
+    @GetMapping("/{fileName}")
     @ResponseStatus(value = HttpStatus.OK)
-    public String getMethodName() throws IOException, InterruptedException {
+    public String getMethodName(@PathVariable String fileName) throws IOException, InterruptedException {
         FingerprintSensorEx.Init();
         long devHandle = FingerprintSensorEx.OpenDevice(0);
         byte[] paramValue = new byte[4];
@@ -66,7 +65,7 @@ public class TestController {
                 ImageIO.write(image, "jpg", baos );
                 baos.flush();
                 MultipartFile multipartFile = new MultipartImage(baos.toByteArray(),"fingerprint.jpg","fingerprint.jpg", MediaType.MULTIPART_FORM_DATA.toString(), baos.size());
-                aws.uploadFile(multipartFile);
+                aws.uploadFile(multipartFile,fileName);
                 break;
             }
         }

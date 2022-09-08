@@ -1,8 +1,9 @@
-package com.example.demo2.services;
+package com.example.demo2.services.impl;
 
 import com.amazonaws.services.s3.AmazonS3;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
+import com.example.demo2.services.AwsS3Service;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,7 +19,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @Service
-public class AwsS3ServiceImpl implements AwsS3Service{
+public class AwsS3ServiceImpl implements AwsS3Service {
     private static final Logger LOGGER = LoggerFactory.getLogger(AwsS3ServiceImpl.class);
     private final AmazonS3 amazonS3;
 
@@ -30,11 +31,11 @@ public class AwsS3ServiceImpl implements AwsS3Service{
     }
 
     @Override
-    public void uploadFile(MultipartFile file) {
+    public void uploadFile(MultipartFile file,String fileName) {
         File mainFile = new File(file.getOriginalFilename());
         try (FileOutputStream stream = new FileOutputStream(mainFile)) {
             stream.write(file.getBytes());
-            String newFileName = System.currentTimeMillis() + "_" + mainFile.getName();
+            String newFileName = fileName;
             PutObjectRequest request = new PutObjectRequest(bucketName, newFileName, mainFile);
             amazonS3.putObject(request);
         } catch (IOException e) {
