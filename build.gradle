@@ -14,6 +14,7 @@ repositories {
 
 dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation group: 'com.machinezoo.sourceafis', name: 'sourceafis', version: '3.17.1'
 	implementation group: 'com.amazonaws', name: 'aws-java-sdk', version: '1.12.21'
 	developmentOnly 'org.springframework.boot:spring-boot-devtools'
 	testImplementation 'org.springframework.boot:spring-boot-starter-test'

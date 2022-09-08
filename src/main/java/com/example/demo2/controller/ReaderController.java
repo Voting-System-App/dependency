@@ -14,19 +14,16 @@ import java.awt.image.BufferedImage;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/reader")
 public class ReaderController {
-
-    private boolean mbStop = true;
     private byte[] template = new byte[2048];
-    private long mhDevice = 0;
-    private long mhDB = 0;
     byte[] imgbuf;
-    private int nFakeFunOn = 1;
-
     private final FingerReader fingerReader;
     private final AwsS3Service aws;
     public ReaderController(FingerReader fingerReader, AwsS3Service aws) {
@@ -34,9 +31,10 @@ public class ReaderController {
         this.aws = aws;
     }
 
-    @GetMapping("/{fileName}")
+    @GetMapping("/{fileName}/validate/{flag}")
     @ResponseStatus(value = HttpStatus.OK)
-    public String getMethodName(@PathVariable String fileName) throws IOException, InterruptedException {
+    public Boolean getMethodName(@PathVariable String fileName,@PathVariable Boolean flag) throws IOException, InterruptedException {
+        Boolean var = false;
         FingerprintSensorEx.Init();
         long devHandle = FingerprintSensorEx.OpenDevice(0);
         byte[] paramValue = new byte[4];
@@ -55,20 +53,33 @@ public class ReaderController {
         size[0] = 2048;
         while (true){
             int response = FingerprintSensorEx.AcquireFingerprint(devHandle, imgbuf, template, size);
-            System.out.println(response);
             Thread.sleep(2000L);
             if (response == 0) {
-                fingerReader.writeBitmap(imgbuf, fpWidth, fpHeight, "src/main/resources/images/fingerprint.bmp");
-                File input = new File("src/main/resources/images/fingerprint.bmp");
-                BufferedImage image = ImageIO.read(input);
-                ByteArrayOutputStream baos = new ByteArrayOutputStream();
-                ImageIO.write(image, "jpg", baos );
-                baos.flush();
-                MultipartFile multipartFile = new MultipartImage(baos.toByteArray(),"fingerprint.jpg","fingerprint.jpg", MediaType.MULTIPART_FORM_DATA.toString(), baos.size());
-                aws.uploadFile(multipartFile,fileName);
-                break;
+                Path path = Paths.get("src/main/resources/images/" + fileName + ".bmp");
+                if(flag==false){
+                    fingerReader.writeBitmap(imgbuf, fpWidth, fpHeight, "src/main/resources/images/"+fileName+".bmp");
+                    File input = new File("src/main/resources/images/"+fileName+".bmp");
+                    BufferedImage image = ImageIO.read(input);
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    ImageIO.write(image, "jpg", baos );
+                    baos.flush();
+                    MultipartFile multipartFile = new MultipartImage(baos.toByteArray(),fileName+".jpg",fileName+".jpg", MediaType.MULTIPART_FORM_DATA.toString(), baos.size());
+                    aws.uploadFile(multipartFile,fileName);
+                    var = true;
+                    Files.delete(path);
+                    break;
+                }
+                else {
+                    fingerReader.writeBitmap(imgbuf, fpWidth, fpHeight, "src/main/resources/images/"+fileName+".bmp");
+                    File input = new File("src/main/resources/images/"+fileName+".bmp");
+                    BufferedImage image = ImageIO.read(input);
+                    File output = new File("src/main/resources/images/"+fileName+".jpg");
+                    ImageIO.write(image, "jpg", output);
+                    var = aws.validate(fileName);
+                    break;
+                }
             }
         }
-        return "testing";
+        return var;
     }
 }
