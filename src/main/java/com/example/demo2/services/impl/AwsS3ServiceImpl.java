@@ -35,6 +35,8 @@ public class AwsS3ServiceImpl implements AwsS3Service {
     @Value("${aws.s3.bucket}")
     private String bucketName;
 
+    @Value("${aws.s3.bucket2}")
+    private String profileName;
     public AwsS3ServiceImpl(AmazonS3 amazonS3) {
         this.amazonS3 = amazonS3;
     }
@@ -50,7 +52,19 @@ public class AwsS3ServiceImpl implements AwsS3Service {
         } catch (IOException e) {
             LOGGER.error(e.getMessage(), e);
         }
+    }
 
+    @Override
+    public void uploadFileProfile(MultipartFile file, String fileName) {
+        File mainFile = new File(file.getOriginalFilename());
+        try (FileOutputStream stream = new FileOutputStream(mainFile)) {
+            stream.write(file.getBytes());
+            String newFileName = fileName;
+            PutObjectRequest request = new PutObjectRequest(profileName, newFileName, mainFile);
+            amazonS3.putObject(request);
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage(), e);
+        }
     }
 
     @Override

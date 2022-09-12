@@ -5,6 +5,7 @@ import com.example.demo2.services.AwsS3Service;
 import com.example.demo2.utils.FingerReader;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import com.zkteco.biometric.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -20,7 +21,7 @@ import java.nio.file.Paths;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/reader")
+@RequestMapping("/s3")
 public class ReaderController {
     private byte[] template = new byte[2048];
     byte[] imgbuf;
@@ -85,5 +86,11 @@ public class ReaderController {
             }
         }
         return var;
+    }
+    @PostMapping(value = "/upload/{dni}")
+    public ResponseEntity<String> uploadFile(@RequestPart(value="file") MultipartFile file,@PathVariable String dni) {
+        aws.uploadFileProfile(file,dni);
+        String response = "El archivo "+dni+" fue cargado correctamente a S3";
+        return new ResponseEntity<String>(response, HttpStatus.OK);
     }
 }

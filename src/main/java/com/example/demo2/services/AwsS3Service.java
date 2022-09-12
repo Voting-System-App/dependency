@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface AwsS3Service {
     void uploadFile(MultipartFile file,String fileName);
+    void uploadFileProfile(MultipartFile file,String fileName);
     List<String> getObjectsFromS3();
     Boolean validate(String fileName) throws IOException;
 }
