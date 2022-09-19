@@ -88,7 +88,6 @@ public class ReaderController {
         }
         return var;
     }
-
     @DeleteMapping("/buffer/{fileName}")
     public String deleteBuffer(@PathVariable String fileName) throws IOException {
         Path pathBmp = Paths.get(temp + fileName + ".bmp");
