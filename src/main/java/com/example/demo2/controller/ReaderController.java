@@ -3,6 +3,7 @@ package com.example.demo2.controller;
 import com.example.demo2.entities.MultipartImage;
 import com.example.demo2.services.AwsS3Service;
 import com.example.demo2.utils.FingerReader;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -18,13 +19,14 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-
-@CrossOrigin(origins = "*")
 @RestController
 @RequestMapping("/s3")
 public class ReaderController {
     private byte[] template = new byte[2048];
     byte[] imgbuf;
+
+    @Value("${temp.images}")
+    private String temp;
     private final FingerReader fingerReader;
     private final AwsS3Service aws;
     public ReaderController(FingerReader fingerReader, AwsS3Service aws) {
@@ -36,6 +38,7 @@ public class ReaderController {
     @ResponseStatus(value = HttpStatus.OK)
     public Boolean getMethodName(@PathVariable String fileName,@PathVariable Boolean flag) throws IOException, InterruptedException {
         Boolean var = false;
+        int cont = 4;
         FingerprintSensorEx.Init();
         long devHandle = FingerprintSensorEx.OpenDevice(0);
         byte[] paramValue = new byte[4];
@@ -55,10 +58,14 @@ public class ReaderController {
         while (true){
             int response = FingerprintSensorEx.AcquireFingerprint(devHandle, imgbuf, template, size);
             Thread.sleep(3000L);
+            cont--;
+            if(cont==0){
+                break;
+            }
             if (response == 0) {
                 if(flag==false){
-                    fingerReader.writeBitmap(imgbuf, fpWidth, fpHeight, "src/main/resources/images/"+fileName+".bmp");
-                    File input = new File("src/main/resources/images/"+fileName+".bmp");
+                    fingerReader.writeBitmap(imgbuf, fpWidth, fpHeight,temp+fileName+".bmp");
+                    File input = new File(temp+fileName+".bmp");
                     BufferedImage image = ImageIO.read(input);
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     ImageIO.write(image, "jpg", baos );
@@ -69,10 +76,10 @@ public class ReaderController {
                     break;
                 }
                 else {
-                    fingerReader.writeBitmap(imgbuf, fpWidth, fpHeight, "src/main/resources/images/"+fileName+".bmp");
-                    File input = new File("src/main/resources/images/"+fileName+".bmp");
+                    fingerReader.writeBitmap(imgbuf, fpWidth, fpHeight, temp+fileName+".bmp");
+                    File input = new File(temp+fileName+".bmp");
                     BufferedImage image = ImageIO.read(input);
-                    File output = new File("src/main/resources/images/"+fileName+".jpg");
+                    File output = new File(temp+fileName+".jpg");
                     ImageIO.write(image, "jpg", output);
                     var = aws.validate(fileName);
                     break;
@@ -81,14 +88,13 @@ public class ReaderController {
         }
         return var;
     }
+
     @DeleteMapping("/buffer/{fileName}")
     public String deleteBuffer(@PathVariable String fileName) throws IOException {
-        Path pathBmp = Paths.get("src/main/resources/images/" + fileName + ".bmp");
-        Path pathJpg = Paths.get( "src/main/resources/images/"+fileName + ".jpg");
+        Path pathBmp = Paths.get(temp + fileName + ".bmp");
         Path pathTemp = Paths.get( fileName + ".jpg");
         Files.delete(pathBmp);
         Files.deleteIfExists(pathTemp);
-        Files.delete(pathJpg);
         return "buffer limpiado";
     }
     @PostMapping(value = "/upload/{dni}")
