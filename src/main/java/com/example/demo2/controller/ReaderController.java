@@ -20,6 +20,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 @RestController
+@CrossOrigin(origins = "*")
 @RequestMapping("/s3")
 public class ReaderController {
     private byte[] template = new byte[2048];
